@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+{% block extra_script %}
+<script type="text/javascript">
+    $(document).ready(function() {
+        $("#username").focus();
+
+        $("#turn-page-link").click(function() {
+            $("#login-info-tab").removeClass("notebook_tab_selected");
+            $("#basic-info-tab").addClass("notebook_tab_selected");
+            $(this).parents(".notebook_page").hide("slide", {
+            direction: 'right'}, 500);
+            $("#basic-info-page-container").fadeIn(900);
+        });
+
+        $(".notebook_controls > a").jacg({radius: '5px', start: '#FFFFFF',
+        end: '#DDDDDD'});
+        $(".notebook_controls > a").mousedown(function() {
+            $(this).jacg({radius: '5px', start: '#ACACAC',
+            end: '#DDDDDD'});
+        });
+        $(".notebook_controls > a").mouseleave(function() {
+            $(this).jacg({radius: '5px', start: '#FFFFFF',
+            end: '#DDDDDD'});
+        });
+        $(".notebook_controls > a").mouseup(function() {
+            $(this).jacg({radius: '5px', start: '#FFFFFF',
+            end: '#DDDDDD'});
+        });
+
+        $("#birthday-year").click(function() {
+            $("#birthday-year-dialog").parent().show();
+            $("#birthday-year-dialog").show();
+            $("#birthday-year-dialog").jScrollPane();
+            var offset = $(this).offset();
+            var h = $(this).outerHeight();
+            $("#birthday-year-dialog").parent().css({
+                'background-color': '#FFFFFF',
+                'border': '1px solid #5690D2',
+                '-moz-border-radius': '3px',
+                '-webkit-border-radius': '3px',
+                '-moz-box-shadow': '0px 1px 2px rgba(0,0,0,0.5)',
+                '-webkit-box-shadow': '0px 1px 2px rgba(0,0,0,0.5)',
+                'z-index': 107,
+                'position': 'absolute',
+                'left': offset.left,
+                'top': offset.top + h + 5
+            });
+
+            $("#dialog-overlay").show();
+            $("#dialog-overlay").click(function() {
+                $("#birthday-year-dialog").parent().hide();
+                $("#dialog-overlay").hide();
+            });
+        });
+    });
+</script>
+{% endblock %}
+{% block content %}
+<div id="registration-container">
+    <div id="collabnote_navigation">
+
+    </div>
+
+    <div class="notebook_doc">
+        <div class="notebook_tab_panel">
+            <div class="notebook_tab notebook_tab_selected" id="login-info-tab">Login</div>
+            <div class="notebook_tab" id="basic-info-tab">Basics</div>
+        </div>
+        <div class="notebook_page" id="login-info-page">
+            <form id="login-info-form">
+                <div class="notebook_bigtitle">
+                    <img src="/site_media/images/signup.png"
+                        style="vertical-align: text-top;" /> Sign Up</div>
+                <div id="login-info-form-container">
+                    <div class="single_form_element">
+                        <div id="username-label" class="notebook_form_label">
+                            Username:</div>
+                        <div class="notebook_form_input">
+                            <input type="text" size="15" id="username" name="username" />
+                        </div>
+                    </div>
+                    <div class="single_form_element">
+                        <div id="email-label" class="notebook_form_label">
+                            Email:</div>
+                        <div class="notebook_form_input">
+                            <input type="text" size="15" name="email" />
+                        </div>
+                    </div>
+                    <div class="single_form_element">
+                        <div id="password-label" class="notebook_form_label">
+                            Password:</div>
+                        <div class="notebook_form_input">
+                            <input type="text" size="15" name="Password" />
+                        </div>
+                    </div>
+                </div>
+                <br />
+                <br />
+                <br />
+                <br />
+                <br />
+                <br />
+                <br />
+                <br />
+                <br />
+                <br />
+                <div class="notebook_controls">
+                    <a class="turn_page_link" id="turn-page-link" href="#">
+                        <img style="vertical-align: middle;"
+                        src="/site_media/images/next.png" />
+                        Turn Page</a>
+                </div>
+            </form>
+        </div>
+        <div class="notebook_page" id="basic-info-page">
+            <div id="basic-info-page-container">
+                <form style="margin-top: 30px;">
+                    <div class="notebook_bigtitle">
+                        <img src="/site_media/images/signup.png"
+                        style="vertical-align: text-top;" /> Basic Info</div>
+                    <div id="basic-info-form-container">
+                        <div class="single_form_element single_form_elem_border">
+                            <div id="gender-male-label" class="notebook_form_label">
+                                Male
+                                <input type="radio" id="gender_male" name="gender" />
+                            </div>
+                        </div>
+                        <div class="single_form_element single_form_elem_border">
+                            <div id="gender-female-label" class="notebook_form_label">
+                                Female
+                                <input type="radio" id="gender_female" name="gender" />
+                            </div>
+                        </div>
+                        <div class="single_form_element single_form_elem_border">
+                            <div id="birth-date-label" class="notebook_form_label">
+                                Birthday
+                            </div>
+                            <div id="birthday-picker" class="birthday_picker">
+                                <div class="birthday_picker_part" id="birthday-day"
+                                    style="margin-left: 10px;"><a href="#">
+                                        Day</a>
+                                </div>
+                                <div class="birthday_picker_part" id="birthday-month"
+                                    style="margin-left: 10px;">
+                                    <a href="#">Month</a>
+                                </div>
+                                <div class="birthday_picker_part" id="birthday-year">
+                                    <a href="#">Year</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <br />
+                    <br />
+                    <br />
+                    <br />
+                    <br />
+                    <br />
+                    <br />
+                    <br />
+                    <br />
+                    <br />
+                    <div class="notebook_controls">
+                        <a class="turn_page_link" href="#">
+                            <img style="vertical-align: middle;"
+                            src="/site_media/images/register.png" />
+                            Sign Up</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="note_cards" id="feature_cards">
+        <div class="single_note_card">
+            <img src="/site_media/images/pin.png" class="pin_image" />
+        </div>
+        <div class="single_note_card" style="margin-left: 10px;">
+            <img src="/site_media/images/pin.png" class="pin_image" />
+        </div>
+        <div class="single_note_card" style="margin-left: 11px;">
+            <img src="/site_media/images/pin.png" class="pin_image" />
+        </div>
+    </div>
+
+    <div class="note_footer">
+
+    </div>
+</div>
+
+<div class="birthday_picker_dialog" id="birthday-year-dialog">
+    <div class="birthday_picker_inner">
+        <div><a href="#">1960</a></div>
+        <div><a href="#">1960</a></div>
+        <div><a href="#">1960</a></div>
+        <div><a href="#">1960</a></div>
+        <div><a href="#">1960</a></div>
+    </div>
+</div>
+{% endblock %}

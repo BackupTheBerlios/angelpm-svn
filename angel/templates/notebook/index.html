@@ -1,0 +1,715 @@
+{% extends "base.html" %}
+{% block extra_script %}
+<script type="text/javascript">
+    document.domain = document.domain;
+</script>
+<script type="text/javascript" src="http://localhost:8000/site_media/script/Orbited.js"></script>
+<script>
+    Orbited.settings.port = 9000;
+    Orbited.settings.hostname = "localhost";
+    TCPSocket = Orbited.TCPSocket;
+</script>
+<script type="text/javascript" src="http://localhost:8000/site_media/script/protocols/stomp/stomp.js"></script>
+<script type="text/javascript">
+    // Set orbited settings
+    var outer_ayout, west_layout,
+    toolbox_container_layout, toolbox_layout,
+    notebook_container_layout, notebook_layout,
+    collaborators_container_layout, collaborators_layout,
+    im_container_layout, im_layout;
+
+    $(document).ready(function() {
+        // Connect STOMP service
+        stomp = new STOMPClient();
+        stomp.onopen = function() {
+        };
+        stomp.onclose = function(c) {
+            alert("close");
+        };
+        stomp.onerror = function(error){
+            alert("Error");
+        }; stomp.onclose = function(c){
+            alert('Lost Connection, Code: ' + c);
+        };
+        stomp.onerror = function(error){
+            alert("Error: " + error);
+        };
+        stomp.onerrorframe = function(frame){
+            alert("Error: " + frame.body);
+        };
+        stomp.onconnectedframe = function() {
+            stomp.subscribe("/shouts");
+        };
+        stomp.onmessageframe = function(frame) {
+            add_message(frame.body);
+        };
+        stomp.connect('localhost', 61613);
+
+        outer_layout = $('body').layout({
+            resizerDragOpacity: 1,
+            minSize: 30,
+            west__size: 200,
+            west__minSize: 200,
+            east__size: 400,
+            east__minSize: 350,
+            west__onresize: function() {
+                west_layout.resizeAll();
+                var c = $("#collaborators-list-container");
+                var w = c.parent().parent().width();
+            c.css({'width': w});
+            c.parent().css({'width': w});
+
+                resize_search_box("#search-collaborators");
+            },
+            east__onresize: function() {
+                im_container_layout.resizeAll();
+                resize_search_box("#search-messages");
+            },
+            center__onresize: function() {
+                notebook_container_layout.resizeAll();
+            },
+            useStateCookie: true
+        });
+
+        west_layout = $('div.ui-layout-west').layout({
+            center__paneSelector: '.west-north',
+            south__paneSelector: '.west-south',
+            center__onresize: function() {
+                toolbox_container_layout.resizeAll();
+                collaborators_container_layout.resizeAll();
+                add_scroll("#collaborators-list-container");
+            },
+            south__onresize: function() {
+                toolbox_container_layout.resizeAll();
+                collaborators_container_layout.resizeAll();
+                add_scroll("#collaborators-list-container");
+            },
+            center__minSize: 100,
+            south__minSize: 300,
+        });
+
+        toolbox_container_layout = layout_window(".west-north",
+        "#toolbox-window", null, 40);
+        im_container_layout = layout_window(".ui-layout-east",
+        "#im-window", "#im-content", 110);
+
+        load_window("#collaborators-content", "/init_collab_window/", function() {
+            collaborators_container_layout = layout_window(".west-south",
+            "#collaborators-window", "#collaborators-content", 40);
+            add_scroll("#collaborators-list-container");
+            init_search_box("#search-collaborators");
+            resize_search_box("#search-collaborators");
+            setup_dialog(".collaborator-im-link", "#user_info_dialog");
+            setup_dialog("#add_collaborator_link", "#add_collaborator_dialog");
+            setup_dialog("#collaborator-info-link", "#collaborator_info_dialog");
+        });
+        load_window("#notebook-window > .window-title-bar", "/init_notebook_window/", function() {
+            init_editor_toolbar("#notebook-tool-bar");
+            init_editor_menubar("#notebook-menu-bar");
+            notebook_container_layout = layout_window(".ui-layout-center",
+            "#notebook-window", "#notebook-content", 40, 73);
+
+            load_editor_iframe($("iframe#collab-editor-iframe"), "/notebook/edit/",
+            function() {
+                var doc = get_iframe("collab-editor-iframe");
+                if (doc) {
+                    doc.designMode = "on";
+                    setup_context_menu(doc, "#editor-context-menu");
+                }
+
+                notebook_container_layout.resizeAll();
+            });
+        });
+        load_window("#im-content", "/init_im_window/", function() {
+            init_menu("#im-menu");
+            init_search_box("#search-messages");
+            resize_search_box("#search-messages");
+            setup_menu_item(".im-message-menu-link", "#im_message_menu", false);
+            setup_menu_item("#im-chat-instances-link", "#im_instances_menu", true);
+            setup_menu_item("#im-set-topic-link", "#im_set_topic_dialog", true);
+
+            $("#im-send").click(function() {
+                var msg = $("#im-text").val();
+                $.ajax({
+                        type: 'POST',
+                        url: '/shout/shout/',
+                        data: {
+                            'message': msg,
+                        }
+                });
+            });
+        });
+
+        $(".collabnote-dialog-button").jacg({radius: '3px', start: '#FFFFFF', end: '#DDDDDD'});
+        $(".collabnote-dialog-button").mousedown(function() {
+        $(this).jacg({radius: '3px', start: '#ACACAC', end: '#DDDDDD'});
+        });
+        $(".collabnote-dialog-button").mouseup(function() {
+        $(this).jacg({radius: '3px', start: '#FFFFFF', end: '#DDDDDD'});
+        });
+        $(".collabnote-dialog-button").mouseleave(function() {
+        $(this).jacg({radius: '3px', start: '#FFFFFF', end: '#DDDDDD'});
+        });
+
+        $(".window-minimize").hover(function() {
+        $(this).css({'background-color': 'rgba(0,0,0,0.2)'});
+        }, function() {
+        $(this).css({'background-color': 'transparent'});
+        });
+        $(".window-minimize").mousedown(function() {
+        $(this).css({'background-color': 'rgba(0,0,0,0.4)'});
+        });
+        $(".window-minimize").mouseleave(function() {
+        $(this).css({'background-color': 'transparent'});
+        });
+        $(".window-minimize").mouseup(function() {
+        $(this).css({'background-color': 'transparent'});
+        });
+    });
+</script>
+{% endblock %}
+{% block content %}
+<div class="ui-layout-north">
+    <div id="top-navigation">
+        <span id="dashboard-span"><a href="#" id="dashboard-link">Rongzhou's dashboard</a></span>
+        <span id="help-span"><a href="#" id="help-link">Help</a></span>
+        <span id="signout-span"><a href="#" id="signout-link">Sign out</a></span>
+    </div>
+</div>
+
+<div class="ui-layout-center" style="padding-right: 5px; padding-bottom: 7px;">
+    <div id="notebook-window" class="tool-window">
+        <div class="window-title-bar" style="padding: 0px;">
+        </div>
+        <div id="notebook-content" class="window-content">
+            <iframe id="collab-editor-iframe" name="collab-editor-iframe"
+                    class="collab-editor-border" frameborder="0" title="CollabNote Editor"
+                    src="javascript:''" oncontextmenu="open_context_menu(event);">
+            </iframe>
+        </div>
+        <div class="window-footer">
+            <div id="notebook-control" style="padding-top: 10px;">
+                <a href="#" id="export_notebook_link">Export Notebook
+                    <img src="/site_media/images/export_notebook.png"
+                    style="margin-left: 5px; vertical-align: text-top;"/></a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="ui-layout-south">
+    <div id="window-list-window">
+        <b>Window List:</b>
+    </div>
+</div>
+
+<div class="ui-layout-west">
+    <div class="west-north" style="padding-left: 10px; padding-right: 5px; padding-bottom: 5px;">
+        <div id="toolbox-window" class="tool-window">
+            <div class="window-title-bar"><a href="#" title="Minimize" class="window-minimize"><img src="/site_media/images/minimize.png" /></a> Documents</div>
+            <div class="window-content"> </div>
+            <div class="window-footer"> </div>
+        </div>
+    </div>
+    <div class="west-center"> </div>
+    <div class="west-south" style="padding-left: 10px; padding-right: 5px; padding-bottom: 7px;">
+        <div id="collaborators-window" class="tool-window">
+            <div class="window-title-bar"><a href="#" title="Minimize" class="window-minimize"><img src="/site_media/images/minimize.png" /></a> Collaborators</div>
+            <div id="collaborators-content" class="window-content">
+            </div>
+            <div class="window-footer">
+                <div id="collaborators-control">
+                    <a href="#" id="add_collaborator_link">Add Collaborator
+                        <img src="/site_media/images/add-16.png"
+                        style="margin-left: 5px; vertical-align: text-top;"/></a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="ui-layout-east" style="padding-right: 10px; padding-bottom: 7px;">
+    <div id="im-window" class="tool-window">
+        <div class="window-title-bar"><a href="#" title="Close" class="window-minimize"><img src="/site_media/images/close_window.png" /></a><a href="#" title="Maximize" class="window-minimize"><img src="/site_media/images/maximize.png" /></a><a href="#" title="Minimize" class="window-minimize"><img src="/site_media/images/minimize.png" /></a> Instant Messaging</div>
+        <div id="im-content" class="window-content">
+        </div>
+        <div class="window-footer im-input-window">
+            <input type="text" id="im-text" style=" outline: none; border: 0px; width: 100% !important; line-height: 20px !important;" />
+            <a style="right: 5px; margin-top: 10px;" id="im-send" class="collabnote-dialog-button">Send</a>
+        </div>
+    </div>
+</div>
+
+<!-- ======================= DIALOGS ======================== -->
+<div class="collabnote-dialog" id="add_collaborator_dialog">
+    <div style="padding: 10px; color: #6B85B3; font-size: 1.4em; font-weight: normal;">Add a new collaborator</div>
+    <div style="padding-left: 10px; padding-right: 10px; padding-top: 10px; padding-bottom: 30px;">
+        <span style="padding-right: 20px;">Address</span><input type="text" size="50" />
+    </div>
+    <div class="collabnote-dialog-separator"> </div>
+    <div style="padding-right: 10px; padding-left: 10px; padding-bottom: 10px;"
+        class="collabnote-dialog-control">
+        <a class="collabnote-dialog-button btn-cancel" style="right: 15px;" href="#">Cancel</a>
+        <a class="collabnote-dialog-button" style="right: 80px;" href="#">Submit</a>
+    </div>
+</div>
+
+<div class="collabnote-dialog" id="collaborator_info_dialog" style="width: 500px;">
+    <a href="#" class="btn-cancel collabnote-dialog-close"><img src="/site_media/images/close.png" /></a>
+    <img src="/site_media/images/user-128.png"
+    style="float: left; vertical-align: text-top;" width="100" height="100" />
+    <div style="float: left;">
+        <div style="font-size: 1.6em;">Rongzhou Shen</div>
+        <div>Address: </span> <span>anticlockwise5@gmail.com</div>
+    </div>
+    <br /><br />
+    <br /><br />
+    <br /><br />
+    <br /><br />
+    <div class="collabnote-dialog-separator"> </div>
+    <div style="padding-right: 10px; padding-left: 10px; padding-bottom: 10px;"
+        class="collabnote-dialog-control">
+        <a class="collabnote-dialog-button" style="right: 15px; width: 6em;" href="#">Edit Profile</a>
+    </div>
+</div>
+
+<div class="collabnote-dialog" id="user_info_dialog" style="width: 500px;">
+    <a href="#" class="btn-cancel collabnote-dialog-close"><img src="/site_media/images/close.png" /></a>
+    <img src="/site_media/images/user-128.png"
+    style="float: left; vertical-align: text-top;" width="100" height="100" />
+    <div style="float: left;">
+        <div style="font-size: 1.6em;">Rongzhou Shen</div>
+        <div>Address: </span> <span>anticlockwise5@gmail.com</div>
+    </div>
+    <br /><br />
+    <br /><br />
+    <br /><br />
+    <br /><br />
+    <div class="collabnote-dialog-separator"> </div>
+    <div style="padding-right: 10px; padding-left: 10px; padding-bottom: 10px;"
+        class="collabnote-dialog-control">
+        <a class="collabnote-dialog-button" style="right: 15px; width: 6em;" href="#">Private IM</a>
+        <a class="collabnote-dialog-button" style="right: 90px; width: 6em;" href="#">Chat History</a>
+    </div>
+</div>
+
+<div class="collabnote-dialog" id="new_page_dialog" style="width: 400px;">
+    <a href="#" class="btn-cancel collabnote-dialog-close"><img src="/site_media/images/close.png" /></a>
+    <div style="color: #6B85B3; font-size: 1.4em; font-weight: normal;">Add a new page</div>
+    <form id="new_page_form">
+        <div style="padding-top: 10px; font-weight: bold">Task</div>
+        <table style="width: 400px;">
+            <tr><th style="text-align: left;" colspan="2">General</th></tr>
+            <tr>
+                <td><a class="selected" href="#">Empty Writer</a></td>
+                <td><a href="#">Organize to dos</a></td>
+            </tr>
+            <tr>
+                <td><a href="#">Take notes</a></td>
+            </tr>
+            <tr><th style="text-align: left;" colspan="2">Project</th></tr>
+            <tr>
+                <td><a href="#">Manage a project</a></td>
+                <td><a href="#">Make a presentation</a></td>
+            </tr>
+            <tr><th style="text-align: left;" colspan="2">Life</th></tr>
+            <tr>
+                <td><a href="#">Plan a trip</a></td>
+                <td><a href="#">Collect recipes</a></td>
+            </tr>
+            <tr>
+                <td><a href="#">Keep a journal</a></td>
+            </tr>
+            <tr><th style="text-align: left;" colspan="2">Custom</th></tr>
+        </table>
+    </form>
+    <div class="collabnote-dialog-separator"> </div>
+    <div class="collabnote-dialog-control" style="padding-bottom: 10px;">
+        <a class="collabnote-dialog-button btn-cancel" style="right: 15px;" href="#">Cancel</a>
+        <a class="collabnote-dialog-button" style="right: 80px;" href="#">Create</a>
+    </div>
+</div>
+
+<div class="collabnote-dialog" id="im_set_topic_dialog">
+    <div>Topic: <input type="text" size="30" /></div>
+</div>
+
+<div class="collabnote-dialog" id="im_message_menu" style="padding: 1px; width: 150px;">
+    <div class="collabnote-dialog-menu-item"><a href="#">Copy to notebook</a></div>
+    <div class="collabnote-dialog-menu-item"><a href="#">Delete message</a></div>
+</div>
+
+<div class="collabnote-dialog" id="export_page_menu" style="min-width: 100px; padding: 1px">
+    <div class="collabnote-dialog-menu-item"><a href="#">To HTML</a></div>
+    <div class="collabnote-dialog-menu-item"><a href="#">To PDF</a></div>
+</div>
+
+<div class="collabnote-dialog" style="width: 300px;" id="yes_no_dialog">
+    <a href="#" class="btn-cancel collabnote-dialog-close"><img src="/site_media/images/close.png" /></a>
+    <div id="yes_no_message"></div>
+    <div class="collabnote-dialog-separator"> </div>
+    <div class="collabnote-dialog-control">
+        <a href="#" style="right: 80px;" class="collabnote-dialog-button">Yes</a>
+        <a href="#" style="right: 15px;" class="btn-cancel collabnote-dialog-button">No</a>
+    </div>
+</div>
+
+<div class="collabnote-dialog" id="page_style_menu" style="min-width: 110px; padding: 1px;">
+    <div class="collabnote-dialog-menu-item"><a href="#">Yellow background</a></div>
+    <div class="collabnote-dialog-menu-item"><a href="#">Wide margin</a></div>
+</div>
+
+<div class="collabnote-dialog" id="pages_menu" style="min-width: 110px; padding: 1px;">
+    <div class="collabnote-dialog-menu-item"><a href="#">Page Title</a></div>
+    <div class="collabnote-dialog-menu-item"><a href="#">Page Title 2 (*)</a></div>
+</div>
+
+<div class="collabnote-dialog" id="im_instances_menu" style="padding: 1px;">
+    <div class="collabnote-dialog-menu-item"><a href="#">anticlockwise5@gmail.com</a></div>
+    <div class="collabnote-dialog-menu-item"><a href="#">eden1218@gmail.com (2)</a></div>
+</div>
+
+<!-- ===================== MENUS ====================== -->
+<div id="file-menu-content" class="collab-menu" style="display: none;">
+    <div id="mi-new" class="collab-submenu collab-menuitem">
+        <div class="collab-menuitem-content">
+            New
+            <span class="collab-submenu-arrow">►</span>
+        </div>
+    </div>
+    <div class="collab-menusep"></div>
+    <div id="mi-rename" class="collab-menuitem">
+        <div class="collab-menuitem-content">
+            Rename...
+        </div>
+    </div>
+    <div id="mi-download" class="collab-submenu collab-menuitem">
+        <div class="collab-menuitem-content">
+            Download as
+            <span class="collab-submenu-arrow">►</span>
+        </div>
+    </div>
+    <div id="mi-save" class="collab-menuitem">
+        <div class="collab-menuitem-content">
+            <div class="collab-menuitem-icon collab-editor-save"> </div>
+            Save
+        </div>
+    </div>
+    <div class="collab-menusep"></div>
+    <div id="mi-print-settings" class="collab-menuitem">
+        <div class="collab-menuitem-content">
+            Print settings...
+        </div>
+    </div>
+    <div id="mi-print-preview" class="collab-menuitem">
+        <div class="collab-menuitem-content">
+            Print preview
+        </div>
+    </div>
+    <div id="mi-print" class="collab-menuitem">
+        <div class="collab-menuitem-content">
+            <div class="collab-menuitem-icon collab-editor-print"> </div>
+            Print
+        </div>
+    </div>
+</div>
+
+<div id="edit-menu-content" class="collab-menu" style="display: none;">
+    <div id="mi-undo" class="collab-menuitem">
+        <div class="collab-menuitem-content">
+            <div class="collab-menuitem-icon collab-editor-undo"> </div>
+            Undo
+        </div>
+    </div>
+    <div id="mi-redo" class="collab-menuitem">
+        <div class="collab-menuitem-content">
+            <div class="collab-menuitem-icon collab-editor-redo"> </div>
+            Redo
+        </div>
+    </div>
+    <div class="collab-menusep"> </div>
+    <div id="mi-cut" class="collab-menuitem">
+        <div class="collab-menuitem-content">
+            <div class="collab-menuitem-icon collab-editor-cut"> </div>
+            Cut
+        </div>
+    </div>
+    <div id="mi-copy" class="collab-menuitem">
+        <div class="collab-menuitem-content">
+            <div class="collab-menuitem-icon collab-editor-copy"> </div>
+            Copy
+        </div>
+    </div>
+    <div id="mi-paste" class="collab-menuitem">
+        <div class="collab-menuitem-content">
+            <div class="collab-menuitem-icon collab-editor-paste"> </div>
+            Paste
+        </div>
+    </div>
+    <div class="collab-menusep"> </div>
+    <div id="mi-selectall" class="collab-menuitem">
+        <div class="collab-menuitem-content">
+            <div class="collab-menuitem-icon collab-editor-selectall"> </div>
+            Select all
+        </div>
+    </div>
+    <div class="collab-menusep"> </div>
+    <div id="mi-find-replace" class="collab-menuitem">
+        <div class="collab-menuitem-content">
+            <div class="collab-menuitem-icon collab-editor-find-replace"> </div>
+            Find and replace
+        </div>
+    </div>
+    <div class="collab-menusep"> </div>
+    <div id="mi-edit-rst" class="collab-menuitem">
+        <div class="collab-menuitem-content">
+            Edit ReStructuredText
+        </div>
+    </div>
+</div>
+<div id="view-menu-content" class="collab-menu" style="display: none;">
+    <div id="mi-preview-html" class="collab-menuitem">
+        <div class="collab-menuitem-content">
+            HTML preview
+        </div>
+    </div>
+    <div id="mi-show-footnotes" class="collab-menuitem collab-option">
+        <div class="collab-menuitem-content">
+            <div class="collab-menuitem-checkbox"> </div>
+            Show footnotes
+        </div>
+    </div>
+</div>
+<div id="insert-menu-content" class="collab-menu" style="display: none;">
+    <div id="im-insert-image" class="collab-menuitem">
+        <div class="collab-menuitem-content">
+            <div class="collab-menuitem-icon collab-editor-insert-image"> </div>
+            Image
+        </div>
+    </div>
+    <div id="mi-insert-link" class="collab-menuitem">
+        <div class="collab-menuitem-content">
+            <div class="collab-menuitem-icon collab-editor-insert-link"> </div>
+            Link
+        </div>
+    </div>
+    <div id="mi-insert-table" class="collab-menuitem">
+        <div class="collab-menuitem-content">
+            <div class="collab-menuitem-icon collab-editor-insert-table"> </div>
+            Table
+        </div>
+    </div>
+    <div id="mi-insert-equation" class="collab-menuitem">
+        <div class="collab-menuitem-content">
+            <div class="collab-menuitem-icon collab-editor-insert-equation"> </div>
+            Equation
+        </div>
+    </div>
+    <div id="mi-insert-footnote" class="collab-menuitem">
+        <div class="collab-menuitem-content">
+            Footnote
+        </div>
+    </div>
+    <div class="collab-menusep"> </div>
+    <div id="mi-insert-special-chars" class="collab-menuitem">
+        <div class="collab-menuitem-content">
+            Special characters
+        </div>
+    </div>
+    <div id="mi-insert-hr" class="collab-menuitem">
+        <div class="collab-menuitem-content">
+            Horizontal line
+        </div>
+    </div>
+    <div class="collab-menusep"> </div>
+    <div id="mi-insert-header" class="collab-menuitem">
+        <div class="collab-menuitem-content">
+            Header
+        </div>
+    </div>
+    <div id="mi-insert-footer" class="collab-menuitem">
+        <div class="collab-menuitem-content">
+            Footer
+        </div>
+    </div>
+    <div class="collab-menusep"> </div>
+    <div id="mi-insert-toc" class="collab-menuitem">
+        <div class="collab-menuitem-content">
+            Table of contents
+        </div>
+    </div>
+</div>
+<div id="format-menu-content" class="collab-menu" style="display: none;">
+    <div id="mi-format-doc-settings" class="collab-menuitem">
+        <div class="collab-menuitem-content">
+            Document settings...
+        </div>
+    </div>
+    <div class="collab-menusep"> </div>
+    <div id="mi-format-align" class="collab-menuitem collab-submenu">
+        <div class="collab-menuitem-content">
+            Align
+            <span class="collab-submenu-arrow">►</span>
+        </div>
+    </div>
+    <div class="collab-menusep"> </div>
+    <div id="mi-format-pg-styles" class="collab-menuitem collab-submenu">
+        <div class="collab-menuitem-content">
+            Paragraph styles
+            <span class="collab-submenu-arrow">►</span>
+        </div>
+    </div>
+    <div class="collab-menusep"> </div>
+    <div id="mi-format-strikethrough" class="collab-menuitem">
+        <div class="collab-menuitem-content">
+            <div class="collab-menuitem-icon collab-editor-format-strikethrough"> </div>
+            Strikethrough
+        </div>
+    </div>
+    <div id="mi-format-superscript" class="collab-menuitem">
+        <div class="collab-menuitem-content">
+            <div class="collab-menuitem-icon collab-editor-format-superscript"> </div>
+            Superscript
+        </div>
+    </div>
+    <div id="mi-format-subscript" class="collab-menuitem">
+        <div class="collab-menuitem-content">
+            <div class="collab-menuitem-icon collab-editor-format-subscript"> </div>
+            Subscript
+        </div>
+    </div>
+</div>
+<div id="table-menu-content" class="collab-menu" style="display: none;">
+    <div id="mi-table-insert" class="collab-menuitem">
+        <div class="collab-menuitem-content">
+            <div class="collab-menuitem-icon collab-editor-insert-table"> </div>
+            Insert table...
+        </div>
+    </div>
+    <div class="collab-menusep"> </div>
+    <div id="mi-table-prop-modify" class="collab-menuitem">
+        <div class="collab-menuitem-content">
+            Edit table properties
+        </div>
+    </div>
+    <div id="mi-table-row-modify" class="collab-menuitem">
+        <div class="collab-menuitem-content">
+            Edit row properties
+        </div>
+    </div>
+    <div id="mi-table-column-modify" class="collab-menuitem">
+        <div class="collab-menuitem-content">
+            Edit column properties
+        </div>
+    </div>
+    <div id="mi-table-cell-modify" class="collab-menuitem">
+        <div class="collab-menuitem-content">
+            Edit cell properties
+        </div>
+    </div>
+    <div class="collab-menusep"> </div>
+    <div id="mi-table-row-up" class="collab-menuitem">
+        <div class="collab-menuitem-content">
+            Move row up
+        </div>
+    </div>
+    <div id="mi-table-row-down" class="collab-menuitem">
+        <div class="collab-menuitem-content">
+            Move row down
+        </div>
+    </div>
+    <div class="collab-menusep"> </div>
+    <div id="mi-table-insert-column-left" class="collab-menuitem">
+        <div class="collab-menuitem-content">
+            Insert column left
+        </div>
+    </div>
+    <div id="mi-table-insert-column-right" class="collab-menuitem">
+        <div class="collab-menuitem-content">
+            Insert column right
+        </div>
+    </div>
+    <div id="mi-table-insert-row-above" class="collab-menuitem">
+        <div class="collab-menuitem-content">
+            Insert row above
+        </div>
+    </div>
+    <div id="mi-table-insert-row-below" class="collab-menuitem">
+        <div class="collab-menuitem-content">
+            Insert row below
+        </div>
+    </div>
+    <div class="collab-menusep"> </div>
+    <div id="mi-table-delete-table" class="collab-menuitem">
+        <div class="collab-menuitem-content">
+            Delete table
+        </div>
+    </div>
+    <div id="mi-table-delete-row" class="collab-menuitem">
+        <div class="collab-menuitem-content">
+            Delete row
+        </div>
+    </div>
+    <div id="mi-table-delete-column" class="collab-menuitem">
+        <div class="collab-menuitem-content">
+            Delete column
+        </div>
+    </div>
+</div>
+<div id="help-menu-content" class="collab-menu" style="display: none;">
+    <div id="mi-help-collabnote" class="collab-menuitem">
+        <div class="collab-menuitem-content">
+            <div class="collab-menuitem-icon collab-editor-help"> </div>
+            CollabNote Help
+        </div>
+    </div>
+    <div class="collab-menusep"> </div>
+    <div id="mi-help-shortcuts" class="collab-menuitem">
+        <div class="collab-menuitem-content">
+            Keyboard shortcuts
+        </div>
+    </div>
+</div>
+<div id="file-new-submenu" class="collab-menu" style="display: none;">
+    <div id="mi-new-doc" class="collab-menuitem">
+        <div class="collab-menuitem-content">
+            <div class="collab-menuitem-icon collab-editor-new-doc"> </div>
+            Document
+        </div>
+    </div>
+</div>
+<div id="file-download-submenu" class="collab-menu" style="display: none;">
+    <div id="mi-download-html" class="collab-menuitem">
+        <div class="collab-menuitem-content">
+            <div class="collab-menuitem-icon collab-editor-download-html"> </div>
+            HTML (Zipped)
+        </div>
+    </div>
+    <div id="mi-download-txt" class="collab-menuitem">
+        <div class="collab-menuitem-content">
+            <div class="collab-menuitem-icon collab-editor-download-txt"> </div>
+            Text
+        </div>
+    </div>
+</div>
+<div id="editor-context-menu" class="collab-menu" style="z-index: 20001; display: none;">
+    <div class="collab-menuitem">
+        <div class="collab-menuitem-content">
+            <div class="collab-menuitem-icon collab-editor-cut"> </div>
+            Cut
+        </div>
+    </div>
+    <div class="collab-menuitem">
+        <div class="collab-menuitem-content">
+            <div class="collab-menuitem-icon collab-editor-copy"> </div>
+            Copy
+        </div>
+    </div>
+    <div class="collab-menuitem">
+        <div class="collab-menuitem-content">
+            <div class="collab-menuitem-icon collab-editor-paste"> </div>
+            Paste
+        </div>
+    </div>
+</div>
+{% endblock %}
