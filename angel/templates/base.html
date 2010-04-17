@@ -3,27 +3,17 @@
     <head>
         <title>{% block title %}Collabnote{% endblock %}</title>
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8"></meta>
-        <link rel="stylesheet" type="text/css" href="/site_media/style/notebook.css"
-                media="screen" />
-        <link rel="stylesheet" type="text/css"
-                href="/site_media/style/ui-lightness/jquery-ui-1.8.custom.css" media="screen" />
-        <link rel="stylesheet" type="text/css"
-                href="/site_media/style/jScrollPane.css" media="all" />
-        <link rel="stylesheet" type="text/css"
-                href="/site_media/style/jquery.contextMenu.css" media="screen" />
-        <script type="text/javascript" src="/site_media/script/jquery-1.4.2.min.js"></script>
-        <script type="text/javascript" src="/site_media/script/jquery-ui-1.8.custom.min.js"></script>
-        <script type="text/javascript" src="/site_media/script/jquery.layout.min-1.2.0.js"></script>
+        <link rel="stylesheet" type="text/css" href="/site_media/style/notebook.css" />
+        <link rel="stylesheet" type="text/css" href="/site_media/style/jquery-ui-1.8.custom.css" />
+        <link rel="stylesheet" type="text/css" href="/site_media/script/dijit/themes/tundra/tundra.css" />
+        <script type="text/javascript" src="/site_media/script/jquery.js"></script>
         <script type="text/javascript" src="/site_media/script/jquery.jacg.js"></script>
-        <script type="text/javascript" src="/site_media/script/jquery.mousewheel.js"></script>
-        <script type="text/javascript" src="/site_media/script/jquery.em.js"></script>
-        <script type="text/javascript" src="/site_media/script/jquery.contextMenu.js"></script>
-        <script type="text/javascript" src="/site_media/script/jScrollPane.js"></script>
+        <script type="text/javascript" src="/site_media/script/jquery.ui.js"></script>
+        <script type="text/javascript" src="/site_media/script/dojo/dojo.js" djConfig="parseOnLoad: true"></script>
         <script type="text/javascript" src="/site_media/script/collabnote.js"></script>
-        <script type="text/javascript" src="/site_media/script/editor.js"></script>
         {% block extra_script %} {% endblock %}
     </head>
-    <body>
+    <body class="tundra">
         {% block content %} {% endblock %}
         <div id="dialog-overlay"></div>
     </body>

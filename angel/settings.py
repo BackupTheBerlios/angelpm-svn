@@ -36,7 +36,7 @@ USE_I18N = True
 
 # Absolute path to the directory that holds media.
 # Example: "//media/media.lawrence.com/"
-MEDIA_ROOT = '/home/rshen/Dropbox/Projects/collabnote/media/'
+MEDIA_ROOT = '/Users/rshen/Dropbox/Projects/collabnote/media/'
 
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash if there is a path component (optional in other cases).
@@ -58,6 +58,11 @@ TEMPLATE_LOADERS = (
 #     'django.template.loaders.eggs.load_template_source',
 )
 
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
+
+LOGIN_URL = "/register/login/"
+
 MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -70,7 +75,7 @@ TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
-    "/home/rshen/Dropbox/Projects/collabnote/templates",
+    "/Users/rshen/Dropbox/Projects/collabnote/templates",
 )
 
 INSTALLED_APPS = (
@@ -81,4 +86,5 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     'django.contrib.admindocs',
     'collabnote.register',
+    'collabnote.xmpp',
 )

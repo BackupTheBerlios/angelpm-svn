@@ -7,15 +7,20 @@ admin.autodiscover()
 
 urlpatterns = patterns('',
     # Example:
-    (r'^notebook/$', 'collabnote.notebook.views.index'),
-    (r'^notebook/edit/$', 'collabnote.notebook.views.edit'),
-    (r'^init_collab_window/$', 'collabnote.notebook.views.init_collab_window'),
-    (r'^init_notebook_window/$', 'collabnote.notebook.views.init_notebook_window'),
-    (r'^init_im_window/$', 'collabnote.notebook.views.init_im_window'),
+    (r'^$', 'collabnote.main.views.index'),
 
-    ('^shout/shout/$', 'collabnote.shout.views.shout'),
+    (r'^notebook/$', 'collabnote.notebook.views.index'),
+    (r'^notebook/dashboard/$', 'collabnote.notebook.views.dashboard'),
+    (r'^notebook/documents/$', 'collabnote.notebook.views.documents'),
+    (r'^notebook/account/$', 'collabnote.notebook.views.account'),
 
     (r'^register/$', 'collabnote.register.views.index'),
+    (r'^register/register/$', 'collabnote.register.views.register'),
+    (r'^register/login/$', 'collabnote.register.views.login_user'),
+    (r'^register/logout/$', 'collabnote.register.views.logout_user'),
+    (r'^register/check_username/$', 'collabnote.register.views.check_username'),
+    (r'^register/check_userexist/$', 'collabnote.register.views.check_userexist'),
+    (r'^register/check_password/$', 'collabnote.register.views.check_password'),
 
     # Uncomment the admin/doc line below and add 'django.contrib.admindocs' 
     # to INSTALLED_APPS to enable admin documentation:

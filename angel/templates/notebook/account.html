@@ -1,0 +1,14 @@
+<table class="collab-notebook-form-table" style="width: 100%; font-size: 12pt">
+    <tr class="collab-notebook-line-legal">
+        <td class="form-label-username form-label"><label for="username">Username:</label></td>
+        <td class="form-value">{{ userinfo.user.username }}</td>
+    </tr>
+    <tr class="collab-notebook-line-legal">
+        <td class="form-label-email form-label"><label for="email">Email:</label></td>
+        <td class="form-value"><input style="padding: 0px; margin: 0px;" class="collab-notebook-form-input" type="text" size="30" id="email" name="email" value="{{ userinfo.user.email }}" /></td>
+    </tr>
+    <tr class="collab-notebook-line-legal">
+        <td class="form-label-realname form-label"><label for="name">Name:</label></td>
+        <td class="form-value"><input style="padding: 0px; margin: 0px;" class="collab-notebook-form-input" type="text" size="30" id="name" name="name" value="{{ userinfo.ofuser.name }}" /></td>
+    </tr>
+</table>

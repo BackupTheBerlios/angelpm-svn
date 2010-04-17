@@ -1,0 +1,23 @@
+{% extends "normal.html" %}
+{% block extra_extra_js %}
+
+{% endblock %}
+{% block page_body %}
+    {% if user.is_authenticated %}
+        <div class="collab-sticker-yellow" id="collab-dashboard-sticker" style="width: 300px; position: absolute; right: 20px; top: 20px;">
+            <div class="collab-sticker-title">{{ user.username }}'s sticker</div>
+            <div class="collab-sticker-content">
+                <ul>
+                    <li><a href="#" id="collab-dashboard-sticker-inbox">Inbox: <span style="color: #F61B1A;">0</span></a></li>
+                    <li><a href="#" id="collab-dashboard-sticker-comments">Comments: <span style="color: #F61B1A;">0</span></a></li>
+                    <li><a href="#" id="collab-dashboard-sticker-documents">Documents: <span style="color: #F61B1A;">0</span></a></li>
+                    <li><a href="#" id="collab-dashboard-sticker-settings">Account settings</a></li>
+                </ul>
+            </div>
+        </div>
+    {% endif %}
+    <div id="collab-first-page-container" style="height: 500px;">
+        Realtime communication and document collaboration
+        in one place
+    </div>
+{% endblock %}

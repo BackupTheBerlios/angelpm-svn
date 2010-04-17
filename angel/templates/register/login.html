@@ -1,0 +1,108 @@
+{% extends "normal.html" %}
+{% block extra_extra_js %}
+    <script type="text/javascript" src="/site_media/script/jquery.form.js"></script>
+    <script type="text/javascript" src="/site_media/script/jquery.metadata.js"></script>
+    <script type="text/javascript" src="/site_media/script/jquery.validate.js"></script>
+    <script type="text/javascript">
+        dojo.addOnLoad(function() {
+            $("#id_username").focus();
+
+            var validator = $("#collab-login-form").validate({
+                onkeyup: false,
+                errorElement: 'div',
+                errorClass: 'form-error-msg',
+                rules: {
+                    username: {
+                        remote: {
+                            url: "/register/check_userexist/",
+                            type: "post",
+                            data: {
+                                username: function() {
+                                    return $("#id_username").val();
+                                },
+                            }
+                        }
+                    },
+                    password: {
+                        remote: {
+                            url: "/register/check_password/",
+                            type: "post",
+                            data: {
+                                username: function() {
+                                    return $("#id_username").val();
+                                },
+                                password: function() {
+                                    return $("#id_password").val();
+                                },
+                            },
+                        },
+                    },
+                },
+                showErrors: function(errorMap, errorList) {
+                    for (var i = 0; this.errorList[i]; i++) {
+                        var error = this.errorList[i];
+                        $(error.element).parent("td").removeClass("form-ok-background");
+                        this.showLabel(error.element, error.message);
+                    }
+                    if (this.settings.success) {
+                        for (var i = 0; this.successList[i]; i++) {
+                            this.showLabel( this.successList[i] );
+                        }
+                    }
+                },
+                errorPlacement: function(error, element) {
+                    error.prependTo(element.parent("td"));
+                },
+                success: function(label) {
+                    label.parent("td").removeClass("form-error-background");
+                    label.parent("td").addClass("form-ok-background");
+                },
+            });
+
+            $("#login-submit-link").click(function() {
+                if (validator.form()) {
+                    $("#collab-login-form").ajaxSubmit({
+                            dataType: "json",
+                            success: function(res, stat, xhr, $f) {
+                                if (res.status == "OK") {
+                                    var redirect = res.redirect;
+                                    window.location.href = redirect;
+                                } else if (res.status == "Failed") {
+                                    validator.showErrors(res.errors);
+                                    validator.focusInvalid();
+                                }
+                            },
+                    });
+                } else {
+                    validator.focusInvalid();
+                }
+            });
+        });
+    </script>
+{% endblock %}
+{% block page_body %}
+    <form method="post" id="collab-login-form" action="{% url collabnote.register.views.login_user %}" encType="multipart/form-data" class="collab-notebook-form">
+        <table class="collab-notebook-form-table" style="width: 100%;">
+            <tr class="collab-notebook-line-legal collab-notebook-title">
+                <td class="form-label"> &nbsp; </td><td class="form-title-login form-value">Login</td>
+            </tr>
+            <tr class="collab-notebook-line-legal">
+                <td class="form-label-username form-label">{{ form.username.label_tag }}</td>
+                <td class="form-value">{{ form.username }}</td>
+            </tr>
+            <tr class="collab-notebook-line-legal">
+                <td class="form-label-password form-label">{{ form.password.label_tag }}</td>
+                <td class="form-value">{{ form.password }}</td>
+            </tr>
+            <tr class="collab-notebook-line-legal">
+                <td colspan="2" style="text-align: center;">{{ form.remember_me }} Remember me</td>
+            </tr>
+            <tr class="collab-notebook-line-legal">
+                <td style="text-align: center;" colspan="2">
+                    <a href="#" id="login-submit-link">Login</a>
+                    <input type="hidden" name="next" value="{{ next }}" />
+                </td>
+            </tr>
+        </table>
+    </form>
+{% endblock %}

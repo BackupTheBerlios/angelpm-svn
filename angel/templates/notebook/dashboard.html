@@ -1,0 +1,25 @@
+{% extends "normal.html" %}
+{% block extra_extra_js %}
+    <script type="text/javascript">
+        dojo.addOnLoad(function() {
+            $("#collab-dashboard-documents-link").click(function() {
+                $("#collab-dashboard-info-panel").load("/notebook/documents/");
+            });
+            $("#collab-dashboard-account-link").click(function() {
+                $("#collab-dashboard-info-panel").load("/notebook/account/");
+            });
+        });
+    </script>
+{% endblock %}
+{% block page_body %}
+<div id="collab-dashboard-tab-bar">
+    <ul class="collab-inline-list">
+        <li><a id="collab-dashboard-documents-link" href="#">Documents</a></li>
+        <li><a href="#">Inbox</a></li>
+        <li><a href="#">Comments</a></li>
+        <li><a id="collab-dashboard-account-link" href="#">Account</a></li>
+    </ul>
+</div>
+<div class="collab-dashboard-panel" id="collab-dashboard-info-panel">
+</div>
+{% endblock %}
